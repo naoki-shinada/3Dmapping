@@ -16,8 +16,10 @@ int
 main(int argc, char** argv)
 {
 	//RANSACパラメータ
-	int  maxitteration = 10000;
+	int  maxitteration = 500;
 	double threshould = 0.03;
+	double Rmin = 0.45;
+	double Rmax = 0.55;
 
 	// All the objects needed
 	pcl::PCDReader reader;
@@ -57,6 +59,7 @@ main(int argc, char** argv)
 		int itteration = 0;
 		vector<double> bestP(3);
 		vector<double> bestJIKU(3);
+		double bestR;
 		
 		while (itteration < maxitteration) {
 			int a = rand() % cloud->points.size() ;
@@ -84,6 +87,17 @@ main(int argc, char** argv)
 
 			double r = sqrt(p1q1[0] * p1q1[0] + p1q1[1] * p1q1[1] + p1q1[2] * p1q1[2]);
 
+			//範囲外の円柱は除外
+			if (r < Rmin || Rmax < r) {
+				continue;
+			}
+			//軸の正負を合わせる
+			if (jiku[1] < 0) {
+				jiku[0] = -1 * jiku[0];
+				jiku[1] = -1 * jiku[1];
+				jiku[2] = -1 * jiku[2];
+			}
+
 			double jikusize = sqrt(jiku[0] * jiku[0] + jiku[1] * jiku[1] + jiku[2] * jiku[2]);
 			if (jikusize <= 0.1) {
 				continue;
@@ -106,6 +120,7 @@ main(int argc, char** argv)
 					maxinliner = count;
 					bestP = point1;
 					bestJIKU = jiku;
+					bestR = r;
 				}
 			}
 			itteration++;
@@ -119,7 +134,7 @@ main(int argc, char** argv)
 		for (j = 0; j < 3; j++) {
 			ofs << bestJIKU[j] << ",";
 		}
-		ofs <<maxinliner<< endl;
+		ofs <<bestR<<","<<maxinliner<< endl;
 	}
 
 	return (0);
